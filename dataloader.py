@@ -18,15 +18,15 @@ def getData(mode):
         label = df['label'].tolist()
         return path, label
     
-    elif mode == 'test_resnet_18':
+    elif mode == 'test_resnet18':
         df = pd.read_csv('./csv_file/resnet_18_test.csv')
         path = df['Path'].tolist()
         return path, None
-    elif mode == 'test_resnet_50':
+    elif mode == 'test_resnet50':
         df = pd.read_csv('./csv_file/resnet_50_test.csv')
         path = df['Path'].tolist()
         return path, None
-    elif mode == 'test_resnet_152':
+    elif mode == 'test_resnet152':
         df = pd.read_csv('./csv_file/resnet_152_test.csv')
         path = df['Path'].tolist()
         return path, None
@@ -44,8 +44,12 @@ class LeukemiaLoader(data.Dataset):
         self.mode = mode
         # To tensor can Convert the pixel value to [0, 1]
         #               Transpose the image shape from [H, W, C] to [C, H, W]
-        self.transformations = transforms.Compose([transforms.ToTensor(), transforms.RandomHorizontalFlip(),
-                                                    transforms.RandomVerticalFlip()])
+        self.transformations = transforms.Compose([
+            transforms.CenterCrop(size=((320, 320))), 
+            transforms.ToTensor(), 
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip()])
+        print(f'Current mode : {mode}')
         print("> Found %d images..." % (len(self.img_name)))  
 
     def __len__(self):
@@ -76,7 +80,9 @@ class LeukemiaLoader(data.Dataset):
         # load img
         # Image.open is used to get the picture and transform it into an obj
         img_obj = Image.open(self.img_name[index])
-        # print(f'img : {img}')
-        label = self.label[index]
         img = self.transformations(img_obj)
-        return img, label
+        if self.label is not None:
+            label = self.label[index] 
+            return img, label
+        else:
+            return img
