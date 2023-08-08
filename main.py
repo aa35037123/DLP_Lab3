@@ -146,21 +146,25 @@ def show_confusion(confusion_matrix):
     ax.set_xlabel('Predicted label')
     ax.set_ylabel('True label')
     return fig
-
-def crop_test():
-    img_path = './new_dataset/test/814.bmp'
-    img = Image.open(img_path)
-    img.show()
-    crop_img = img.crop((0, 0, 300, 300))
-    crop_img.show()
+def find_highest_acc(path_df, model_name):
+    df = pd.read_csv(path_df) if os.path.exists(path_df) else None
+    if df is None:
+        print(f'{path_df} is not exists.')
+        return
+    test_col_name = model_name+' test'
+    highest_acc = 0
+    for acc in df[test_col_name]:
+        if acc > highest_acc:
+            highest_acc = acc
+    return highest_acc
 ###############################
     """
         HyperParameters
     """
 ###############################
 batch_num_ResNet18 = 64
-batch_num_ResNet50 = 20
-batch_num_ResNet152 = 8
+batch_num_ResNet50 = 25
+batch_num_ResNet152 = 12
 epochs = 50
 learning_rate = 0.005
 num_classes = 2
@@ -195,7 +199,7 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Current device : {device}')
     mode = input('Please input mode : ')
-    model_name = input('Please input model name you want to train/evaluate : ')
+    model_name = input('Please input model name you want to train/test/evaluate : ')
 
     if mode == 'train':
         dataset_train_ResNet = LeukemiaLoader('train')
@@ -208,12 +212,12 @@ if __name__ == "__main__":
             # print(f'Input img\'s shape : {dataset_train_ResNet18.__getitem__(13)[0].shape}')
             # print(f'loader_train\'s shape : {loader_train.shape}')
             loader_valid_ResNet18 = DataLoader(dataset_valid_ResNet, batch_num_ResNet18, shuffle=True, num_workers=4)
-            df_ResNet18, best_wts_ResNet18, confusion_ResNet18 = train('resnet18', loader_train_ResNet18, loader_valid_ResNet18, 
+            df_ResNet18, best_wts_ResNet18, best_confusion_ResNet18 = train('resnet18', loader_train_ResNet18, loader_valid_ResNet18, 
                                                                         epochs, device, learning_rate, num_classes)
             print('Training of ResNet18 is finish !')
             df_ResNet18.to_csv(_path_df_ResNet18, index=False)
             torch.save(best_wts_ResNet18, _path_best_wts_ResNet18)
-            fig_confusion_ResNet18 = show_confusion(confusion_ResNet18)
+            fig_confusion_ResNet18 = show_confusion(best_confusion_ResNet18)
             fig_confusion_ResNet18.savefig(_path_confusion_ResNet18)
         ######
         # train ResNet50
@@ -221,12 +225,12 @@ if __name__ == "__main__":
         elif model_name == 'resnet50':
             loader_train_ResNet50 = DataLoader(dataset_train_ResNet, batch_num_ResNet50, shuffle=True, num_workers=4)
             loader_valid_ResNet50 = DataLoader(dataset_valid_ResNet, batch_num_ResNet18, shuffle=True, num_workers=4)
-            df_ResNet50, best_wts_ResNet50, confusion_ResNet50 = train('resnet50', loader_train_ResNet50, loader_valid_ResNet50, 
+            df_ResNet50, best_wts_ResNet50, best_confusion_ResNet50 = train('resnet50', loader_train_ResNet50, loader_valid_ResNet50, 
                                                                         epochs, device, learning_rate, num_classes)
             print('Training of ResNet50 is finish !')
             df_ResNet50.to_csv(_path_df_ResNet50, index=False)
             torch.save(best_wts_ResNet50, _path_best_wts_ResNet50)
-            fig_confusion_ResNet50 = show_confusion(confusion_ResNet50)
+            fig_confusion_ResNet50 = show_confusion(best_confusion_ResNet50)
             fig_confusion_ResNet50.savefig(_path_confusion_ResNet50)
             # plt.show(fig_confusion_ResNet50)
         ######
@@ -235,15 +239,15 @@ if __name__ == "__main__":
         else:
             loader_train_ResNet152 = DataLoader(dataset_train_ResNet, batch_num_ResNet152, shuffle=True, num_workers=4)
             loader_valid_ResNet152 = DataLoader(dataset_valid_ResNet, batch_num_ResNet152, shuffle=True, num_workers=4)
-            df_ResNet152, best_wts_ResNet152, confusion_ResNet152 = train('resnet152', loader_train_ResNet152, loader_valid_ResNet152, 
+            df_ResNet152, best_wts_ResNet152, best_confusion_ResNet152 = train('resnet152', loader_train_ResNet152, loader_valid_ResNet152, 
                                                                         epochs, device, learning_rate, num_classes)
             print('Training of ResNet152 is finish !')
             df_ResNet152.to_csv(_path_df_ResNet152, index=False)
             torch.save(best_wts_ResNet152, _path_best_wts_ResNet152)
-            fig_confusion_ResNet152 = show_confusion(confusion_ResNet152)
+            fig_confusion_ResNet152 = show_confusion(best_confusion_ResNet152)
             fig_confusion_ResNet152.savefig(_path_confusion_ResNet152)
 
-    else:
+    elif mode == 'test':
         print('Testing ...')
         ######
         # test ResNet18
@@ -269,7 +273,44 @@ if __name__ == "__main__":
             loader_test_ResNet152 = DataLoader(dataset_test_ResNet152, batch_num_ResNet152, shuffle=False, num_workers=4)
             predictions_ResNet152 = test(model_name, loader_test_ResNet152, device, _path_best_wts_ResNet152)
             save_result(csv_path=_path_test_file_ResNet152, save_path=_path_test_result_ResNet152, predict_result=predictions_ResNet152, model_name='resnet_152')
-    
+    elif mode == 'eval':
+        dataset_valid_ResNet = LeukemiaLoader('valid')
+        if model_name == 'resnet18':
+            loader_valid_ResNet18 = DataLoader(dataset_valid_ResNet, batch_num_ResNet18, shuffle=True, num_workers=4)
+            model = ResNet.ResNet18(input_channels=3, num_classes=2)
+            model.load_state_dict(torch.load(_path_best_wts_ResNet18))
+            acc_rate_eval, confunsion_ResNet18 = evaluate(model, loader_valid_ResNet18, device, num_classes)
+            highest_acc_ResNet18 = find_highest_acc(_path_df_ResNet18, model_name)
+            print(f'resnet18 test\'s best acc : {highest_acc_ResNet18}')
+            fig_confusion_ResNet18 = show_confusion(confunsion_ResNet18)
+            fig_confusion_ResNet18.show()
+            
+        ######
+        # test ResNet50
+        ######
+        elif model_name == 'resnet50':
+            loader_valid_ResNet50 = DataLoader(dataset_valid_ResNet, batch_num_ResNet50, shuffle=True, num_workers=4)
+            model = ResNet.ResNet50(input_channels=3, num_classes=2)
+            model.load_state_dict(torch.load(_path_best_wts_ResNet50))
+            acc_rate_eval, confunsion_ResNet50 = evaluate(model, loader_valid_ResNet50, device, num_classes)
+            highest_acc_ResNet50 = find_highest_acc(_path_df_ResNet50, model_name)
+            print(f'resnet18 test\'s best acc : {highest_acc_ResNet50}')
+            fig_confusion_ResNet50 = show_confusion(confunsion_ResNet50)
+            fig_confusion_ResNet50.show()
+            
+        ######
+        # test ResNet152
+        ######
+        else:
+            loader_valid_ResNet152 = DataLoader(dataset_valid_ResNet, batch_num_ResNet152, shuffle=True, num_workers=4)
+            model = ResNet.ResNet152(input_channels=3, num_classes=2)
+            model.load_state_dict(torch.load(_path_best_wts_ResNet152))
+            acc_rate_eval, confunsion_ResNet152 = evaluate(model, loader_valid_ResNet152, device, num_classes)
+            highest_acc_ResNet152 = find_highest_acc(_path_df_ResNet152, model_name)
+            print(f'resnet18 test\'s best acc : {highest_acc_ResNet152}')
+            fig_confusion_ResNet152 = show_confusion(confunsion_ResNet152)
+            fig_confusion_ResNet152.show()
+            
     # axis = 0 is concat on vertical direction, axis = 1 is concat on horizontal direction
     # if ignore_index = True, ignore origin index, reindexing
     df_epochs = pd.DataFrame()
