@@ -281,7 +281,7 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(_path_best_wts_ResNet18))
             acc_rate_eval, confunsion_ResNet18 = evaluate(model, loader_valid_ResNet18, device, num_classes)
             highest_acc_ResNet18 = find_highest_acc(_path_df_ResNet18, model_name)
-            print(f'resnet18 test\'s best acc : {highest_acc_ResNet18}')
+            print(f'{model_name} test\'s best acc : {highest_acc_ResNet18}')
             fig_confusion_ResNet18 = show_confusion(confunsion_ResNet18)
             fig_confusion_ResNet18.show()
             
@@ -294,7 +294,7 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(_path_best_wts_ResNet50))
             acc_rate_eval, confunsion_ResNet50 = evaluate(model, loader_valid_ResNet50, device, num_classes)
             highest_acc_ResNet50 = find_highest_acc(_path_df_ResNet50, model_name)
-            print(f'resnet18 test\'s best acc : {highest_acc_ResNet50}')
+            print(f'{model_name} test\'s best acc : {highest_acc_ResNet50}')
             fig_confusion_ResNet50 = show_confusion(confunsion_ResNet50)
             fig_confusion_ResNet50.show()
             
@@ -307,7 +307,7 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(_path_best_wts_ResNet152))
             acc_rate_eval, confunsion_ResNet152 = evaluate(model, loader_valid_ResNet152, device, num_classes)
             highest_acc_ResNet152 = find_highest_acc(_path_df_ResNet152, model_name)
-            print(f'resnet18 test\'s best acc : {highest_acc_ResNet152}')
+            print(f'{model_name} test\'s best acc : {highest_acc_ResNet152}')
             fig_confusion_ResNet152 = show_confusion(confunsion_ResNet152)
             fig_confusion_ResNet152.show()
             
