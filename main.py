@@ -69,6 +69,7 @@ def train(model_name, loader_train, loader_valid, epochs, device, learning_rate,
     df = pd.DataFrame()
     best_model_wts = None
     best_model_acc = 0.0
+    best_confusion = None # it has highest accuracy
     acc_train = list()
     acc_test = list()
     for epoch in range(1, epochs+1):
@@ -111,12 +112,13 @@ def train(model_name, loader_train, loader_valid, epochs, device, learning_rate,
         if acc_rate_eval > best_model_acc:
             best_model_acc = acc_rate_eval
             best_model_wts = copy.deepcopy(model.state_dict())
+            best_confusion = confunsion_matrix
     # print(f'Length of acc_train : {len(acc_train)}')
     # print(f'Length of acc_test : {len(acc_test)}')
     df[model_name+' train'] = acc_train
     df[model_name+' test'] = acc_test
     
-    return df, best_model_wts, confunsion_matrix
+    return df, best_model_wts, best_confusion
 
 # Read img path(name) from ./csv_file, and use the name and predict value build a new csv file
 def save_result(csv_path, save_path, predict_result, model_name):

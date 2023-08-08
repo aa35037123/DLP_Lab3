@@ -58,8 +58,6 @@ class LeukemiaLoader(data.Dataset):
 
     # this function works different on test and train stage
     def __getitem__(self, index):
-        """something you should implement here"""
-
         """
            step1. Get the image path from 'self.img_name' and load it.
                   hint : path = root + self.img_name[index] + '.jpeg'

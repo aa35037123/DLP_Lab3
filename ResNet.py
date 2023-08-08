@@ -42,7 +42,8 @@ class ResBlock(nn.Module):
         super(ResBlock, self).__init__()
         self.identity_downsample = identity_downsample
         # if stride = 1, then input 2d shape is the same as output 2d shape 
-        self.block_conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False) # if kernel size is single number, that means the kernel is square
+        # if kernel size is single number, that means the kernel is square
+        self.block_conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False) 
         self.batch_norm1 = nn.BatchNorm2d(out_channels) # add batch norm after conv, can avoid cov. shift
         
         self.block_conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
